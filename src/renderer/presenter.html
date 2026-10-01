@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline';     script-src 'self'; connect-src 'self' http://127.0.0.1:3000 ws://127.0.0.1:3000;"
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teleprompter IA — Apresentador</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+
+<body class="presenter-body">
+  <div class="presenter-window">
+    <header class="presenter-topbar">
+      <div class="presenter-brand">TELEPROMPTER IA</div>
+      <div class="presenter-status">
+        <span class="status-dot green"></span>
+        <span>Conectado</span>
+      </div>
+    </header>
+
+    <main class="presenter-stage" id="presenterStage">
+      <div class="presenter-script" id="presenterScript">
+
+        <div class="presenter-line previous">
+          Boa noite.
+        </div>
+
+        <div class="presenter-line current">
+          Começamos agora<br />
+          o nosso jornal.
+        </div>
+
+        <div class="presenter-line next">
+          Entre os principais assuntos<br />
+          desta quarta-feira...
+        </div>
+
+        <div class="presenter-line future">
+          A previsão do tempo para<br />
+          Santa Catarina...
+        </div>
+
+      </div>
+
+      <div class="presenter-progress">
+        <span id="presenterCounter">2 / 8</span>
+        <div class="progress-track">
+          <div class="progress-fill" id="presenterProgress"></div>
+        </div>
+        <span id="presenterPercent">25%</span>
+      </div>
+    </main>
+
+    <footer class="presenter-footer">
+      <span>Modo automático</span>
+      <span>Parakeet • 0.8s</span>
+    </footer>
+  </div>
+
+  <script src="./js/presenter.js"></script>
+</body>
+</html>

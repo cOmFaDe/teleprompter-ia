@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline';     script-src 'self'; connect-src 'self' http://127.0.0.1:3000 ws://127.0.0.1:3000;"
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teleprompter IA — Operador</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">TP</div>
+        <div>
+          <strong>Teleprompter IA</strong>
+          <span>v0.1.0</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-section="operator">
+          <span class="nav-icon">▣</span>
+          <span>Operador</span>
+        </button>
+
+        <button class="nav-item" id="presenterNav">
+          <span class="nav-icon">♙</span>
+          <span>Apresentador</span>
+        </button>
+
+        <button class="nav-item" data-section="preview">
+          <span class="nav-icon">◉</span>
+          <span>Preview</span>
+        </button>
+
+        <button class="nav-item" data-section="settings">
+          <span class="nav-icon">⚙</span>
+          <span>Configurações</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="network-status">
+          <span class="status-dot green"></span>
+          <div>
+            <strong>Sistema online</strong>
+            <span>Local / Windows</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h1>Painel do Operador</h1>
+          <p id="dateLabel">Teleprompter em modo local</p>
+        </div>
+
+        <div class="topbar-right">
+          <span class="clock" id="clock">00:00:00</span>
+          <button class="secondary-btn" id="openPresenterBtn">
+            Abrir apresentador
+          </button>
+        </div>
+      </header>
+
+      <section class="dashboard">
+
+        <div class="status-grid">
+          <article class="status-card">
+            <div class="status-card-icon mic">●</div>
+            <div>
+              <span class="card-label">Microfone</span>
+              <strong>Conectado</strong>
+              <small>Interface USB / Canal 1</small>
+            </div>
+            <span class="status-pill success">ONLINE</span>
+          </article>
+
+          <article class="status-card">
+            <div class="status-card-icon ai">✦</div>
+            <div>
+              <span class="card-label">Parakeet (IA)</span>
+              <strong>Online</strong>
+              <small>Modelo local</small>
+            </div>
+            <span class="status-pill success">ONLINE</span>
+          </article>
+
+          <article class="status-card">
+            <div class="status-card-icon live">≈</div>
+            <div>
+              <span class="card-label">Transcrição</span>
+              <strong id="transcriptionStatus">Ao vivo</strong>
+              <small>Latência: <span id="latency">0.8s</span></small>
+            </div>
+            <span class="status-pill success" id="livePill">LIVE</span>
+          </article>
+        </div>
+
+        <div class="work-grid">
+
+          <section class="left-column">
+
+            <article class="panel transcription-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">RECONHECIMENTO DE VOZ</span>
+                  <h2>Transcrição ao vivo</h2>
+                </div>
+                <span class="listening-indicator">
+                  <span class="pulse"></span>
+                  Escutando
+                </span>
+              </div>
+
+              <div class="waveform" id="waveform">
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+              </div>
+
+              <div class="transcription-text" id="transcriptionText">
+                Boa noite, começamos agora o nosso jornal...
+              </div>
+
+              <div class="transcription-footer">
+                <span class="update-badge">Atualizando...</span>
+                <span>Confiança <strong id="confidence">94%</strong></span>
+              </div>
+            </article>
+
+            <article class="panel script-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">ROTEIRO ATUAL</span>
+                  <h2>Jornal — 19:00</h2>
+                </div>
+                <div class="panel-actions">
+                  <button class="icon-btn" id="importScriptBtn" title="Importar roteiro">＋</button>
+                  <span class="script-counter" id="scriptCounter">2 / 8</span>
+                </div>
+              </div>
+
+              <div class="script-list" id="scriptList"></div>
+            </article>
+
+          </section>
+
+          <aside class="right-column">
+
+            <article class="panel controls-panel">
+              <div class="panel-header compact">
+                <div>
+                  <span class="eyebrow">CONTROLE</span>
+                  <h2>Teleprompter</h2>
+                </div>
+              </div>
+
+              <div class="control-buttons">
+                <button class="primary-btn" id="pauseBtn">Ⅱ&nbsp; Pausar</button>
+                <button class="secondary-btn wide" id="advanceBtn">›&nbsp; Avançar</button>
+                <button class="secondary-btn wide" id="backBtn">‹&nbsp; Retroceder</button>
+                <button class="secondary-btn wide" id="resetBtn">↻&nbsp; Reiniciar</button>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="setting-row">
+                <div>
+                  <strong>Sincronização automática</strong>
+                  <small>Seguir a voz do apresentador</small>
+                </div>
+
+                <button class="toggle active" id="autoSyncToggle" aria-label="Sincronização automática">
+                  <span></span>
+                </button>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="mini-control">
+                <div class="mini-control-head">
+                  <span>Velocidade</span>
+                  <strong id="speedValue">1.0x</strong>
+                </div>
+                <input id="speedRange" type="range" min="0.5" max="2" step="0.1" value="1" />
+              </div>
+
+              <div class="mini-control">
+                <div class="mini-control-head">
+                  <span>Tamanho da fonte</span>
+                  <strong id="fontValue">72px</strong>
+                </div>
+                <input id="fontRange" type="range" min="40" max="110" step="2" value="72" />
+              </div>
+            </article>
+
+            <article class="panel preview-panel">
+              <div class="panel-header compact">
+                <div>
+                  <span class="eyebrow">MONITOR 2</span>
+                  <h2>Preview</h2>
+                </div>
+                <span class="monitor-badge">APRESENTADOR</span>
+              </div>
+
+              <div class="presenter-preview">
+                <div class="preview-line previous">Boa noite.</div>
+                <div class="preview-line current">Começamos agora<br />o nosso jornal.</div>
+                <div class="preview-line next">Entre os principais assuntos<br />desta quarta-feira...</div>
+              </div>
+
+              <div class="preview-footer">
+                <span>Monitor secundário</span>
+                <span id="displayInfo">Detectando...</span>
+              </div>
+            </article>
+
+          </aside>
+        </div>
+      </section>
+
+      <section class="settings-view hidden" id="settingsView">
+        <div class="page-title">
+          <span class="eyebrow">SISTEMA</span>
+          <h2>Configurações</h2>
+          <p>Prepare o ambiente para conectar o microfone e o Parakeet.</p>
+        </div>
+
+        <div class="settings-grid">
+          <article class="panel settings-card">
+            <span class="eyebrow">ÁUDIO</span>
+            <h3>Entrada de áudio</h3>
+
+            <label>Dispositivo de entrada</label>
+            <select>
+              <option>Interface USB — Canal 1</option>
+              <option>Microfone padrão do Windows</option>
+              <option>Line In</option>
+            </select>
+
+            <label>Formato</label>
+            <select>
+              <option>16 kHz · Mono · 16 bit</option>
+              <option>48 kHz · Mono · 16 bit</option>
+            </select>
+
+            <button class="secondary-btn wide">Testar microfone</button>
+            <button style="margin-top: 10px;" class="primary-btn wide" id="btnInicializar">Inicializar back-end</button>
+            <p style="margin-top: 10px;">Status back-end: Não inicializado</p>
+          </article>
+          
+          
+ 
+          <article class="panel settings-card">
+            <span class="eyebrow">PARAKEET</span>
+            <h3>Reconhecimento de voz</h3>
+
+            <label>Modelo</label>
+            <select>
+              <option>Parakeet TDT — local</option>
+            </select>
+
+            <label>Buffer</label>
+            <select id="bufferSelect">
+              <option value="0.5">0.5 segundo (menor latência)</option>
+              <option value="1">1.0 segundo</option>
+              <option>2.0 segundos</option>
+            </select>
+
+            <label>Processamento</label>
+            <select id="processingDevice">
+              <option value="auto">Automático</option>
+              <option value="cpu">CPU</option>
+              <option value="cuda">GPU (CUDA)</option>
+            </select>
+
+            <div class="info-box">
+              GPU usa CUDA quando o PyTorch e o driver NVIDIA estiverem disponíveis.
+            </div>
+          </article>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="./js/app.js"></script>
+</body>
+</html>
