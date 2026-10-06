@@ -18,7 +18,116 @@ brasileiro:
 yuriyvnv/parakeet-tdt-0.6b-portuguese
 ```
 
-## 2. Fluxo completo da aplicação
+## 2. Instalação em outra máquina Windows
+
+### 2.1 Pré-requisitos
+
+- Windows 10 ou Windows 11 de 64 bits;
+- Python 3.11 recomendado;
+- microfone funcionando e acesso ao microfone permitido pelo Windows;
+- conexão com a internet no primeiro carregamento do modelo;
+- pelo menos 10 GB livres para as dependências e o modelo;
+- GPU NVIDIA/CUDA opcional; sem GPU, a transcrição pode ser mais lenta.
+
+Instale o Python em <https://www.python.org/downloads/windows/> e marque
+`Add Python to PATH`. Confirme no PowerShell:
+
+```powershell
+python --version
+```
+
+### 2.2 Instalação pelo instalador
+
+O instalador gerado pelo projeto é:
+
+```text
+dist/Jornal IA Teleprompter-0.1.0-x64.exe
+```
+
+Execute o instalador, escolha o diretório e mantenha a criação de atalhos. O
+artefato atual inclui o Electron e o worker `python/worker.py`, mas não inclui
+um interpretador Python nem as dependências do Parakeet. Copie a pasta `python/`
+para a máquina de teste, por exemplo em `C:\TeleprompterIA`, e execute:
+
+```powershell
+cd C:\TeleprompterIA
+python -m venv .venv-parakeet
+.\.venv-parakeet\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r .\python\requirements.txt
+```
+
+Se o PowerShell bloquear a ativação:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Ative o ambiente novamente e configure o interpretador do aplicativo:
+
+```powershell
+.\.venv-parakeet\Scripts\Activate.ps1
+$pythonPath = "C:\TeleprompterIA\.venv-parakeet\Scripts\python.exe"
+[Environment]::SetEnvironmentVariable("PARAKEET_PYTHON", $pythonPath, "User")
+```
+
+Feche e abra o aplicativo novamente. No primeiro carregamento, o modelo
+`yuriyvnv/parakeet-tdt-0.6b-portuguese` será baixado automaticamente.
+
+No Windows, habilite o microfone em **Configurações > Privacidade e segurança >
+Microfone**, incluindo o acesso para aplicativos da área de trabalho.
+
+### 2.3 Instalação pelo código-fonte
+
+Com o projeto copiado para a máquina de teste:
+
+```powershell
+cd C:\TeleprompterIA
+npm install
+python -m venv .venv-parakeet
+.\.venv-parakeet\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r .\python\requirements.txt
+$env:PARAKEET_PYTHON = "C:\TeleprompterIA\.venv-parakeet\Scripts\python.exe"
+npm start
+```
+
+### 2.4 Verificação e teste completo
+
+Com o aplicativo aberto, verifique o backend e os microfones:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:3000/health
+Invoke-RestMethod http://127.0.0.1:3000/status
+Invoke-RestMethod http://127.0.0.1:3000/audio/devices
+```
+
+Teste o dashboard do operador, a janela do apresentador, a seleção e captura
+do microfone, a transcrição em português, a sincronização automática, os
+controles manuais, a fonte, a velocidade e um ou dois monitores.
+
+Para testar um arquivo WAV:
+
+```powershell
+$body = @{ path = "C:\TeleprompterIA\teste.wav" } | ConvertTo-Json
+Invoke-RestMethod -Method Post `
+  -Uri http://127.0.0.1:3000/parakeet/test-audio `
+  -ContentType "application/json" -Body $body
+```
+
+O arquivo precisa existir e o modelo precisa estar carregado.
+
+### 2.5 Problemas comuns
+
+- **Parakeet offline:** confira `$env:PARAKEET_PYTHON` e reinstale as
+  dependências de `python/requirements.txt`.
+- **Nenhum microfone:** confira as permissões do Windows e execute
+  `python -c "import sounddevice as sd; print(sd.query_devices())"`.
+- **Modelo não baixa:** verifique internet, firewall, espaço em disco e acesso
+  ao Hugging Face.
+- **Transcrição lenta:** sem GPU NVIDIA/CUDA, o processamento usa CPU.
+
+## 3. Fluxo completo da aplicação
 
 ```text
 Electron
@@ -70,7 +179,7 @@ Microfone
   -> app.js e presenter.js
 ```
 
-## 3. Estrutura dos arquivos próprios
+## 4. Estrutura dos arquivos próprios
 
 ```text
 teleprompter-ia-electron/
@@ -106,7 +215,7 @@ teleprompter-ia-electron/
 dependências, ambientes ou arquivos gerados. Eles não fazem parte da lógica
 autoral do projeto e não devem ser editados manualmente.
 
-## 4. Arquivos de configuração e dependências
+## 5. Arquivos de configuração e dependências
 
 ### `package.json`
 
@@ -134,7 +243,7 @@ Lista as dependências Python:
 
 `torch` e o suporte a CUDA vêm pelo ambiente usado pelo NeMo/PyTorch.
 
-## 5. Processo principal do Electron
+## 6. Processo principal do Electron
 
 Arquivo: `src/main/main.js`
 
@@ -249,7 +358,7 @@ de erro em exceções com a mensagem retornada pelo backend.
 - `recognition:start` chama `POST /recognition/start`.
 - `recognition:stop` chama `POST /recognition/stop`.
 
-## 6. Ponte segura entre Electron e interface
+## 7. Ponte segura entre Electron e interface
 
 Arquivo: `src/preload/preload.js`
 
@@ -277,7 +386,7 @@ O preload roda com acesso controlado ao Electron. Ele usa
 Cada função chama `ipcRenderer.invoke`, evitando que o HTML tenha acesso
 direto a `require`, `fs`, `child_process` ou outras APIs sensíveis.
 
-## 7. Backend HTTP e WebSocket
+## 8. Backend HTTP e WebSocket
 
 Arquivo: `src/main/backend/server.js`
 
@@ -448,7 +557,7 @@ seja interpretada a partir do novo bloco.
 Encerra o worker, fecha WebSocket e servidor HTTP e finaliza o processo.
 É registrado para `SIGTERM` e `SIGINT`.
 
-## 8. Algoritmo de reconhecimento do roteiro
+## 9. Algoritmo de reconhecimento do roteiro
 
 Arquivo: `src/main/backend/script-tracker.js`
 
@@ -574,7 +683,7 @@ matches, pontuação e confiança.
 Esse comportamento evita que uma frase curta repetida, como `"boa noite"`,
 faça o roteiro saltar para outra ocorrência distante.
 
-## 9. Tela do operador
+## 10. Tela do operador
 
 ### `src/renderer/index.html`
 
@@ -716,7 +825,7 @@ O listener de `btnInicializar` controla o ciclo:
 - inicia captura;
 - ou para Parakeet e backend ao clicar novamente.
 
-## 10. Tela do apresentador
+## 11. Tela do apresentador
 
 ### `src/renderer/presenter.html`
 
@@ -773,7 +882,7 @@ Atualiza tamanho de fonte e velocidade.
 - `ArrowUp` e `ArrowLeft`: voltam;
 - cada ação manual é enviada ao backend.
 
-## 11. Estilos visuais
+## 12. Estilos visuais
 
 Arquivo: `src/renderer/css/styles.css`
 
@@ -826,7 +935,7 @@ Adaptam o layout para telas menores:
 - empilham colunas;
 - transformam grids em uma única coluna.
 
-## 12. Worker Python e Parakeet
+## 13. Worker Python e Parakeet
 
 Arquivo: `python/worker.py`
 
@@ -998,7 +1107,7 @@ Em caso de erro:
 }
 ```
 
-## 13. Modelo de dados das mensagens principais
+## 14. Modelo de dados das mensagens principais
 
 ### Atualização do roteiro
 
@@ -1043,7 +1152,7 @@ Em caso de erro:
 - `manual`: veio de botão ou teclado;
 - `state`: estado enviado ao conectar.
 
-## 14. Como usar
+## 15. Como usar
 
 ### Instalação Node
 
@@ -1081,7 +1190,7 @@ npm start
 8. Abra o apresentador.
 9. Ative ou desative a sincronização automática conforme necessário.
 
-## 15. Formato recomendado de roteiro
+## 16. Formato recomendado de roteiro
 
 Use um arquivo `.txt` UTF-8. Cada linha não vazia vira um bloco:
 
@@ -1095,7 +1204,7 @@ Vamos aos detalhes.
 Linhas vazias são removidas. O texto inteiro não deve conter código
 JavaScript, HTML ou comandos: ele é tratado como conteúdo literal do roteiro.
 
-## 16. Diagnóstico
+## 17. Diagnóstico
 
 ### Backend não inicia
 
@@ -1161,7 +1270,7 @@ Confira se:
 - o apresentador foi aberto depois do Electron;
 - o roteiro foi enviado após a importação.
 
-## 17. Pontos importantes de manutenção
+## 18. Pontos importantes de manutenção
 
 - Não coloque funções JavaScript dentro de strings usadas em `innerHTML`.
 - Não altere o modelo do worker para outro idioma sem atualizar a regra
@@ -1174,7 +1283,7 @@ Confira se:
 - Não edite `node_modules`, `.venv`, `.venv-parakeet` ou `__pycache__`.
 - Ao mudar a porta, atualize o backend, o Electron e o Content Security Policy.
 
-## 18. Validação rápida
+## 19. Validação rápida
 
 Com o projeto parado, valide a sintaxe JavaScript:
 
@@ -1199,7 +1308,7 @@ Teste a saúde do backend:
 Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3000/health
 ```
 
-## 19. Resumo por arquivo
+## 20. Resumo por arquivo
 
 | Arquivo | Responsabilidade |
 |---|---|
@@ -1217,3 +1326,76 @@ Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3000/health
 | `src/renderer/js/presenter.js` | Sincronização visual do apresentador. |
 | `src/renderer/css/styles.css` | Aparência, layout, animações e responsividade. |
 | `README/README.md` | Esta documentação técnica. |
+
+## 21. Empacotamento Windows
+
+O projeto agora possui scripts de empacotamento:
+
+```powershell
+npm.cmd run dist
+npm.cmd run dist:portable
+```
+
+O primeiro gera um instalador NSIS. O segundo gera uma versão portátil. A
+configuração está no `package.json` e usa `electron-builder`.
+
+### O que é empacotado automaticamente
+
+- Electron;
+- Node.js usado pelo Electron;
+- código JavaScript e HTML;
+- backend HTTP/WebSocket;
+- worker Python (`python/worker.py`);
+- arquivos de dependência listados na configuração de recursos.
+
+### Python e modelo de IA
+
+Para o `.exe` funcionar em uma máquina sem Python instalado, é necessário
+preparar uma distribuição Python própria em:
+
+```text
+python/runtime/
+```
+
+Ela deve conter:
+
+```text
+python/runtime/Scripts/python.exe
+python/runtime/Lib/
+python/runtime/DLLs/
+```
+
+O backend procura primeiro esse Python empacotado. Em desenvolvimento, ele
+continua usando `.venv-parakeet/Scripts/python.exe`.
+
+O modelo Parakeet também precisa estar disponível dentro do pacote ou ser
+baixado previamente. Como o modelo e as bibliotecas de `torch`/NeMo são
+grandes, o ambiente atual `.venv-parakeet` ocupa aproximadamente 1,55 GB.
+Copiar esse ambiente inteiro para o instalador produziria um pacote muito
+grande.
+
+### Recomendação de distribuição
+
+Há duas opções:
+
+1. **Instalador completo offline**: incluir Python, dependências, PyTorch,
+   NeMo e modelo. Funciona sem internet, mas pode ocupar vários gigabytes.
+2. **Instalador leve com primeira configuração**: incluir o Electron, backend e
+   worker; instalar ou baixar o ambiente/modelo na primeira execução. O
+   instalador fica menor, mas exige internet ou um pacote de dependências
+   separado.
+
+Um único arquivo `.exe` pode ser o instalador, mas internamente o Windows
+precisará extrair os recursos Python e o modelo para uma pasta de instalação.
+Não é recomendável tentar transformar PyTorch, NeMo e o modelo em um único
+binário nativo, pois essas bibliotecas carregam DLLs e arquivos auxiliares.
+
+### Checklist antes de gerar a versão final
+
+1. Preparar `python/runtime` com uma instalação Python redistribuível.
+2. Instalar as dependências Python dentro desse runtime.
+3. Colocar o modelo `.nemo` em uma pasta de recursos definida.
+4. Ajustar `worker.py` para procurar esse modelo empacotado.
+5. Executar `npm.cmd run dist`.
+6. Testar o instalador em um Windows limpo, sem Node, Electron ou Python.
+7. Testar microfone, GPU/CPU, importação de roteiro e segundo monitor.
